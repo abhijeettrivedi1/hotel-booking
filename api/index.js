@@ -96,7 +96,13 @@ app.post("/api/login", async(req, res) =>{
       jwt.sign({email:userdoc.email,id:userdoc._id},jwtSecret,{},(err,token)=>{
         if(err) throw err;
         else{
-          res.cookie("token",token).json(userdoc)
+          res.cookie("token",token,{
+            expires: new Date(Date.now() + 1000 * 60 * 60 * 1000),
+            maxAge: 1000 * 60 * 60 * 1000,
+            httpOnly: true,
+            sameSite: "none",
+            secure: true
+          }).json(userdoc)
         }
       })
     }
