@@ -134,7 +134,12 @@ app.get("/api/profile", (req, res) => {
 
 
 app.post("/api/logout", (req, res) => {
-  res.cookie("token","").json(true);
+   res.cookie('token', '', {
+        expires: new Date(0), // Expire the cookie immediately
+        httpOnly: true,
+        sameSite: "none",
+        secure: true
+    }).json({ success: true });
 })
 app.post("/api/upload-by-link", async (req, res) => {
   console.log("k")
