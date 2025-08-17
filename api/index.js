@@ -27,15 +27,10 @@ app.use(
     origin: true, // Allow all origins
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed methods
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-      "Origin",
-    ], // Allowed headers
+    allowedHeaders: "*", 
   })
 );
+
  mongoose.connect(process.env.mongo_uri)
  .then(()=>console.log('Connected to Mongo'))
  .catch((err)=>console.log(err));
