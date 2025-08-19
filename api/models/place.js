@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const placeSchema = new mongoose.Schema({
-    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "Uer" },
     title: String,
     address: String,  // Typo here, should be 'address'
     photos: [String],

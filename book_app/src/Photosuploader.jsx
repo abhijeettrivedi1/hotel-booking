@@ -9,7 +9,7 @@ export default function Photosuploader({ addedphotos, onChange }) {
     const { data } = await axios.post("/upload-by-link", {
       link: photolinks,
     });
-    console.log(data)
+    // console.log(data)
     onChange((prev) => [...prev, data]);
     
     setPhotolinks("");

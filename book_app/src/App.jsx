@@ -13,6 +13,8 @@ import PlacesFormPage from './pages/PlacesFormPage'
 import Placepage from './pages/Placepage' 
 import BookingPage from './pages/BookingPageSingular'
 import BookingsPage from './pages/BookingsPage'
+import ChatPage from './pages/ChatPage'
+import ChatsPage from './pages/ChatsPage'
 axios.defaults.baseURL=import.meta.env.VITE_API_BASE_URL
 axios.defaults.withCredentials=true
 function App() {
@@ -30,6 +32,8 @@ function App() {
           <Route path="place/:id" element={<Placepage/>}/>
           <Route path="/account/bookings" element={<BookingsPage/>}/>
           <Route path="/account/booking/:id" element={<BookingPage/>}/>
+          <Route path="/chat/:otherUserId" element={<ChatPage />} />
+          <Route path="/chats" element={<ChatsPage />} />
          </Route>
         
       </Routes>

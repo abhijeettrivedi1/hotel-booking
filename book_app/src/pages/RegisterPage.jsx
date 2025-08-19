@@ -1,23 +1,34 @@
-import { useState } from "react"
+import { useState,useContext } from "react"
 import { Link } from "react-router-dom"
+import { Usercontext } from "../usercontext.jsx"
 import axios from "axios"
+import {  Navigate } from "react-router-dom"
+
 export default function RegisterPage(){
     const [name,setName]=useState("")
     const [email,setEmail]=useState("")
     const [password,setPassword]=useState("")
+    const {setUser}=useContext(Usercontext)
+    const[redirect,setRedirect]=useState(false)
     async function registerUser(e){
         e.preventDefault()
         try{
-            await axios.post("/register",{
+            const userinfo=await axios.post("/register",{
                 name,
                 email,
                 password
             });
+            // console.log(userinfo)
+            setUser(userinfo.data)
             alert("User registration successful")
+            setRedirect(true)
         }catch{
             alert("User registration failed")
         }
         
+    }
+    if(redirect==true){
+            return <Navigate to={"/"}/>
     }
     return(
         <div className="mt-4 grow flex items-center justify-around">
