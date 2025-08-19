@@ -22,7 +22,11 @@ export default function ChatBox({ otherUserId }) {
       // socketRef.current = io("http://localhost:3000", { auth: { token: yourToken } });
       
       // Option B (works with httpOnly cookie): connect then register userId
-      socketRef.current = io(import.meta.env.VITE_API_BASE_URL, { withCredentials: true });
+      const baseUrl = import.meta.env.VITE_API_BASE_URL.replace("/api", "");
+      socketRef.current = io(baseUrl, {
+        path: "/api/socket.io",
+        withCredentials: true,
+      });
     }
     const socket = socketRef.current;
 

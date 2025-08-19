@@ -42,7 +42,11 @@ export default function ChatList() {
 
     // setup socket and register
     if (!socketRef.current) {
-      socketRef.current = io(import.meta.env.VITE_API_BASE_URL, { withCredentials: true });
+        const baseUrl = import.meta.env.VITE_API_BASE_URL.replace("/api", "");
+              socketRef.current = io(baseUrl, {
+                path: "/api/socket.io",
+                withCredentials: true,
+        });
     }
     const socket = socketRef.current;
     socket.emit("register", { userId: user._id });
