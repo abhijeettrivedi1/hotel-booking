@@ -30,7 +30,7 @@ export default function ChatList() {
     // fetch initial list
     setLoading(true);
     axios
-      .get("http://localhost:3000/api/chats", { withCredentials: true })
+      .get("/chats", { withCredentials: true })
       .then((res) => {
         setChats(res.data || []);
       })
@@ -42,7 +42,7 @@ export default function ChatList() {
 
     // setup socket and register
     if (!socketRef.current) {
-      socketRef.current = io("http://localhost:3000", { withCredentials: true });
+      socketRef.current = io(import.meta.env.VITE_API_BASE_URL, { withCredentials: true });
     }
     const socket = socketRef.current;
     socket.emit("register", { userId: user._id });

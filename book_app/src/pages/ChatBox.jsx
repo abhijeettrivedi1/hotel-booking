@@ -20,9 +20,9 @@ export default function ChatBox({ otherUserId }) {
     if (!socketRef.current) {
       // Option A: pass token if you can read it (NOT httpOnly cookies)
       // socketRef.current = io("http://localhost:3000", { auth: { token: yourToken } });
-
+      
       // Option B (works with httpOnly cookie): connect then register userId
-      socketRef.current = io("http://localhost:3000", { withCredentials: true });
+      socketRef.current = io(import.meta.env.VITE_API_BASE_URL, { withCredentials: true });
     }
     const socket = socketRef.current;
 
@@ -31,7 +31,7 @@ export default function ChatBox({ otherUserId }) {
 
     // fetch chat history
     axios
-      .get(`http://localhost:3000/api/chat/${otherUserId}`, { withCredentials: true })
+      .get(`/chat/${otherUserId}`, { withCredentials: true })
       .then((res) => {
         if (res.data && Array.isArray(res.data.messages)) {
           // console.log(res.data)

@@ -365,7 +365,7 @@ app.get("/api/bookings",async (req,res)=>{
 // Create server & io (you already do this — keep server variable)
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: ["http://localhost:5173", "http://localhost:3000"], credentials: true },
+  cors: { origin: ["http://localhost:5173", "http://localhost:3000","https://hotel-booking-w9oo.onrender.com/api"], credentials: true },
 });
 
 // Middleware for socket auth using handshake.auth.token (optional but recommended).
