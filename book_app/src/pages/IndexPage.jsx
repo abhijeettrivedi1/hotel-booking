@@ -19,7 +19,9 @@ export default function IndexPage() {
     ac: false,
     parking: false,
   });
-  const [sortBy, setSortBy] = useState("relevance"); // relevance | price-asc | price-desc | newest | rating
+
+  // only price-based sorting allowed; empty string means 'no sort' (preserve original order)
+  const [sortBy, setSortBy] = useState(""); // "" | price-asc | price-desc
 
   useEffect(() => {
     let cancelled = false;
@@ -44,7 +46,51 @@ export default function IndexPage() {
     [perks]
   );
 
-  // filtering logic (simple substring matches — fuse.js removed)
+  // helper for a simple local relevance score (kept for filtering when text present)
+  function relevanceScore(p, q) {
+    const ql = q.toLowerCase();
+    const title = (p.title || "").toString().toLowerCase();
+    const addrFields = [];
+    if (typeof p.address === "string") addrFields.push(p.address);
+    else if (p.address && typeof p.address === "object") {
+      addrFields.push(p.address.city || "", p.address.state || "", p.address.area || "");
+    }
+    const address = addrFields.join(" ").toLowerCase();
+    const description = (p.description || "").toString().toLowerCase();
+
+    let score = 0;
+
+    // Title: strongest signal
+    if (title.includes(ql)) {
+      score += 0;
+      score += Math.min(1, Math.max(0, title.indexOf(ql) / 100));
+    } else {
+      score += 3;
+    }
+
+    // Address: medium signal
+    if (address.includes(ql)) {
+      score += 1;
+      score += Math.min(1, Math.max(0, address.indexOf(ql) / 200));
+    } else {
+      score += 4;
+    }
+
+    // Description: weaker signal
+    if (description.includes(ql)) {
+      score += 2;
+      score += Math.min(1, Math.max(0, description.indexOf(ql) / 300));
+    } else {
+      score += 5;
+    }
+
+    // small boost for higher rated places
+    score -= (Number(p.ratingAvg || 0) / 10);
+
+    return score;
+  }
+
+  // filtering logic (substring matches, plus local relevance ordering when text present but only if no price sort)
   const filtered = useMemo(() => {
     if (!places || places.length === 0) return [];
 
@@ -56,7 +102,11 @@ export default function IndexPage() {
       base = base.filter((p) =>
         [
           p.title,
-          p.address,
+          typeof p.address === "string" ? p.address : [
+            p.address?.city,
+            p.address?.state,
+            p.address?.area
+          ].filter(Boolean).join(" "),
           p.description,
           (p.searchableText || ""),
         ]
@@ -69,7 +119,12 @@ export default function IndexPage() {
     if (location) {
       const q = location.toLowerCase();
       base = base.filter((p) =>
-        [p.address, p.address?.city, p.address?.state, p.address?.area]
+        [
+          typeof p.address === "string" ? p.address : undefined,
+          p.address?.city,
+          p.address?.state,
+          p.address?.area
+        ]
           .filter(Boolean)
           .some((f) => f.toString().toLowerCase().includes(q))
       );
@@ -99,20 +154,21 @@ export default function IndexPage() {
       });
     }
 
-    // 6) Sorting
+    // 6) Sorting — ONLY price-based sorting is applied
     const sorted = [...base];
+
     if (sortBy === "price-asc") {
       sorted.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
     } else if (sortBy === "price-desc") {
       sorted.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
-    } else if (sortBy === "newest") {
-      sorted.sort(
-        (a, b) =>
-          new Date(b.createdAt || b._id.getTimestamp?.() || Date.now()) -
-          new Date(a.createdAt || a._id.getTimestamp?.() || Date.now())
-      );
-    } else if (sortBy === "rating") {
-      sorted.sort((a, b) => Number(b.ratingAvg || 0) - Number(a.ratingAvg || 0));
+    } else {
+      // no price sort requested — preserve original order.
+      // However if user entered text and you want local relevance ordering when not sorting by price:
+      if (text) {
+        // local relevance ordering when user searched and didn't ask for a price sort
+        const q = text;
+        sorted.sort((a, b) => relevanceScore(a, q) - relevanceScore(b, q));
+      }
     }
 
     return sorted;
@@ -125,7 +181,7 @@ export default function IndexPage() {
     setPriceMax("");
     setGuests("");
     setPerks({ wifi: false, pool: false, ac: false, parking: false });
-    setSortBy("relevance");
+    setSortBy("");
   };
   
   return (
@@ -133,14 +189,13 @@ export default function IndexPage() {
       
       {/* Top search + filters */}
       <div className="mt-6 mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-        {/* Short filters / sort */}
+
+        {/* Short filters / sort (price only) */}
         <div className="flex gap-2 items-center">
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="border rounded-lg py-2 px-3">
-            <option value="relevance">Relevance</option>
+            <option value="">Default</option>
             <option value="price-asc">Price: low → high</option>
             <option value="price-desc">Price: high → low</option>
-            <option value="rating">Top rated</option>
-            <option value="newest">Newest</option>
           </select>
         </div>
       </div>
@@ -207,7 +262,7 @@ export default function IndexPage() {
         {priceMax && <FilterChip label={`Max ₹${priceMax}`} onClear={() => setPriceMax("")} />}
         {guests && <FilterChip label={`${guests} guests`} onClear={() => setGuests("")} />}
         {selectedPerks.map((p) => <FilterChip key={p} label={p} onClear={() => setPerks(prev => ({ ...prev, [p]: false }))} />)}
-        {sortBy !== "relevance" && <FilterChip label={`Sort: ${sortBy}`} onClear={() => setSortBy("relevance")} />}
+        {sortBy && <FilterChip label={`Sort: ${sortBy === "price-asc" ? "Price: low→high" : "Price: high→low"}`} onClear={() => setSortBy("")} />}
       </div>
 
       {/* Grid of results */}
@@ -226,14 +281,14 @@ export default function IndexPage() {
                   <div className="w-full h-48 flex items-center justify-center text-gray-500">No image</div>
                 )}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 to-transparent p-4">
-                  <h2 className="text-white font-semibold text-lg truncate">{place.address}</h2>
+                  <h2 className="text-white font-semibold text-lg truncate">{typeof place.address === 'string' ? place.address : (place.address?.city || place.address?.state || place.address?.area || "")}</h2>
                   <h3 className="text-gray-300 text-sm truncate">{place.title}</h3>
                 </div>
               </div>
 
               <div className="flex justify-between items-center mt-2">
                 <div>
-                  <h2 className="text-gray-800 font-bold text-lg">{place.address}</h2>
+                  <h2 className="text-gray-800 font-bold text-lg">{typeof place.address === 'string' ? place.address : (place.address?.city || place.address?.state || place.address?.area || "")}</h2>
                   <h3 className="text-gray-500 text-sm">{place.title}</h3>
                 </div>
                 <div className="text-right">
